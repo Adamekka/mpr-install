@@ -1,6 +1,11 @@
 # mpr-install
 Faster and nicer way to install packages from mpr (makedeb package repository).
 
+## Dependencies
+
+* git
+* makedeb
+
 ## Setup and run guide
 
 1. Clone this repo:<br />
