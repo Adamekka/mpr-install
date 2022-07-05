@@ -24,7 +24,7 @@ mpr
 
 5. (optional) Remove "mpr-install" folder, that you cloned to your home folder:
 ```
-cd .. && sudo rm -r mpr-install
+cd .. && rm -f -r mpr-install
 ```
 <br />
 PS: You can install things, that are only on Flatpak and Snap and not on apt, like btop and Discord.
