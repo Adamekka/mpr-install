@@ -3,12 +3,28 @@ Faster and nicer way to install packages from mpr (makedeb package repository).
 
 ## Setup and run guide
 
-1. Download mpr.sh and place it in your home directory.<br />
-2. Run "bash mpr.sh".<br />
+1. Clone this repo:<br />
 ```
-bash mpr.sh
+git clone https://github.com/Adamekka/mpr-install
 ```
-3. Insert package name you would like to install and done.<br /><br />
-![image](https://user-images.githubusercontent.com/68786400/177042907-2b47fc72-c478-467e-a64b-d17e1c4aaae2.png)
+2. Go to mpr-install folder:
+```
+cd mpr-install/
+```
+2. Run "sudo make install" to install this script to your system:<br />
+```
+sudo make install
+```
+3. Run "mpr" to start script:<br />
+```
+mpr
+```
+4. Insert package name you would like to install and done:<br /><br />
+![image](https://user-images.githubusercontent.com/68786400/177309057-252afe1d-da57-4fc9-b11d-bd8e9ee01138.png)
 
-You can install things, that are only on Flatpak and Snap and not on apt, like btop and Discord.
+5. (optional) Remove "mpr-install" folder, that you cloned to your home folder:
+```
+cd .. && sudo rm -r mpr-install
+```
+<br />
+PS: You can install things, that are only on Flatpak and Snap and not on apt, like btop and Discord.
