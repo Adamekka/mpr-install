@@ -1,5 +1,5 @@
 # mpr-install
-Faster and nicer way to install packages from mpr (makedeb package repository).
+A faster and nicer way to install packages from mpr (makedeb package repository).
 
 ## Dependencies
 
