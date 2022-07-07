@@ -3,6 +3,8 @@ A faster and nicer way to install packages from mpr (makedeb package repository)
 
 ## Dependencies
 
+* cat
+* curl
 * git
 * makedeb
 
