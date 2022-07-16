@@ -7,7 +7,9 @@ You can install things, that are only on Flatpak and Snap and not on apt, like b
 * cat
 * curl
 * git
+* make
 * makedeb
+* wget
 
 ## Setup and run guide
 
