@@ -11,7 +11,7 @@ You can install things, that are only on Flatpak and Snap and not on apt, like b
 * makedeb
 * wget
 
-## Setup and run guide
+## Install
 
 1. Clone this repo:
 ```
@@ -25,31 +25,23 @@ cd mpr-install/
 ```
 sudo make install
 ```
-4. Run "mpr" to start script:
+4. (optional) Remove "mpr-install" folder, that you cloned to your home folder:
 ```
-mpr
-```
-5. Insert package name you would like to install and done:<br />
-![image](https://user-images.githubusercontent.com/68786400/177309057-252afe1d-da57-4fc9-b11d-bd8e9ee01138.png)
-
-6. (optional) Remove "mpr-install" folder, that you cloned to your home folder:
-```
-cd .. && rm -f -r mpr-install
+cd .. && rm -rf mpr-install
 ```
 
-## Updating
+## Usage
 
-1. If you want to check for updates, run "mpr-update":
-```
-mpr-update
-```
+![image](https://user-images.githubusercontent.com/68786400/179354119-6d7fbbb1-c8fc-4f4e-b7ac-bfeb4096b8a3.png)
+
+
 ## Known issues
 
 1. You do not have permission for the directory $BUILDDIR:
 ![image](https://user-images.githubusercontent.com/68786400/177850543-a921acda-5d70-4459-91e2-6e452542fd63.png)
 
 Fix: Delete folder that it created previously.<br />
-For example downloading "btop" failed for me, so I had to "rm -rf btop/" and run "mpr" again.
+For example downloading  ```btop``` failed for me, so I had to  ```rm -rf btop/``` and run ```mpr``` again.
 ```
 rm -rf PackageThatItFailedToDownload/
 ```
