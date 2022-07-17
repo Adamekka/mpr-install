@@ -41,7 +41,7 @@ cd .. && rm -rf mpr-install
 ![image](https://user-images.githubusercontent.com/68786400/177850543-a921acda-5d70-4459-91e2-6e452542fd63.png)
 
 Fix: Delete folder that it created previously.<br />
-For example downloading  ```btop``` failed for me, so I had to  ```rm -rf btop/``` and run ```mpr``` again.
+For example downloading  ```btop``` failed for me, so I had to  ```rm -rf btop/``` and run ```mpr install btop``` again.
 ```
 rm -rf PackageThatItFailedToDownload/
 ```
