@@ -21,11 +21,11 @@ git clone https://github.com/Adamekka/mpr-install
 ```
 cd mpr-install/
 ```
-3. Run "sudo make install" to install this script to your system:
+3. Run ```sudo make install``` to install this script to your system:
 ```
 sudo make install
 ```
-4. (optional) Remove "mpr-install" folder, that you cloned to your home folder:
+4. (optional) Remove ```mpr-install``` folder, that you cloned to your home folder:
 ```
 cd .. && rm -rf mpr-install
 ```
