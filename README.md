@@ -49,3 +49,6 @@ For example downloading  ```btop``` failed for me, so I had to  ```rm -rf btop/`
 ```
 rm -rf PackageThatItFailedToDownload/
 ```
+## Buy me a coffee :)))
+
+https://paypal.me/retardant
