@@ -2,6 +2,10 @@
 A faster and nicer way to install packages from mpr (makedeb package repository).<br />
 You can install things, that are only on Flatpak and Snap and not on apt, like btop and Discord.
 
+## Trello
+
+https://trello.com/b/0PaxQ7HH/mpr-install
+
 ## Dependencies
 
 * cat
