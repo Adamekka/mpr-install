@@ -21,7 +21,7 @@ https://trello.com/b/0PaxQ7HH/mpr-install
 ```
 git clone https://github.com/Adamekka/mpr-install
 ```
-2. Go to mpr-install folder:
+2. Go to ```mpr-install``` folder:
 ```
 cd mpr-install/
 ```
