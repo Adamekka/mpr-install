@@ -11,6 +11,7 @@ https://trello.com/b/0PaxQ7HH/mpr-install
 * cat
 * curl
 * git
+* jq (will be needed in next version - 1.4)
 * make
 * makedeb
 * wget
