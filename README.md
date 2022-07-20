@@ -6,7 +6,6 @@ https://trello.com/b/0PaxQ7HH/mpr-install
 
 ## Dependencies
 
-* cat
 * curl
 * git
 * jq
