@@ -3,7 +3,10 @@
 bold=$(tput bold)
 normal=$(tput sgr0)
 red="\033[0;31m"
+yellow="\033[1;33m"
 nc="\033[0m" # No Color
+
+version=1.4
 
 ###########
 #FUNCTIONS#
@@ -11,7 +14,7 @@ nc="\033[0m" # No Color
 
 
 check_dependencies () {
-    dependencies=(cat curl git make makedeb wget)
+    dependencies=(cat curl git jq make makedeb wget)
     isUserMissingDependencies=false
     for i in ${dependencies[@]}
     do
@@ -32,70 +35,129 @@ check_dependencies () {
 }
 
 check_versions () {
-    currentVersion=$(cat /usr/bin/mpr-install/version)
     latestVersion=$(curl -s https://raw.githubusercontent.com/Adamekka/mpr-install/main/version.txt)
 }
 
 mpr_update () {
-    check_versions
-    printf "Your version is: $currentVersion\n"
-    printf "Latest version is: $latestVersion\n"
-    if [[ $currentVersion == $latestVersion ]]
+    printf "Checking for update...\n"
+    wget -q --spider https://google.com
+    if [ $? -eq 0 ]
     then
-        printf "You have the latest version!\n"
-    else
-        printf "A newer version is available!\n"
-        read -p "Do you want to update to version $latestVersion? [y/n]: " yn
+        check_versions
+        printf "Your version is: $version\n"
+        printf "Latest version is: $latestVersion\n"
+        if [[ $version == $latestVersion ]]
+        then
+            printf "You have the latest version!\n"
+        else
+            printf "A newer version is available!\n"
+            read -p "Do you want to update to version $latestVersion? [y/n]: " yn
 
-        case $yn in
-            [yY] ) printf "Updating...\n"
-                git clone https://github.com/Adamekka/mpr-install
-                cd mpr-install/
-                sudo make install
-                cd .. && rm -f -r mpr-install;;
-            [nN] ) printf "Update denied\n";;
-            * ) printf "${red}Error:${nc} bad response\n"
-                printf "Type [y] for update and [n] for not update\n";;
-        esac
+            case $yn in
+                [yY] ) printf "Updating...\n"
+                    git clone https://github.com/Adamekka/mpr-install
+                    cd mpr-install/
+                    sudo make install
+                    cd .. && rm -f -r mpr-install;;
+                [nN] ) printf "Update denied\n";;
+                * ) printf "${red}Error:${nc} bad response\n"
+                    printf "Type [y] for update and [n] for not update\n";;
+            esac
+        fi
+    else
+        printf "${yellow}Warning:${nc} You are offline, unable to check for updates\n"
     fi
 }
 
 mpr_update_minimal () {
     printf "Checking for update...\n"
-    check_versions
     wget -q --spider https://google.com
-    if [[ $currentVersion != $latestVersion ]]
+    if [ $? -eq 0 ]
     then
-        printf "A newer version is available\n"
-        printf "Please run ${bold}mpr selfupdate${normal} to update\n"
+        check_versions
+        if [[ $version != $latestVersion ]]
+        then
+            printf "A newer version is available\n"
+            printf "Please run ${bold}mpr selfupdate${normal} to update\n"
+        else
+            printf "You are up to date!\n"
+        fi
     else
-        printf "You are up to date!\n"
+        printf "${yellow}Warning:${nc} You are offline, unable to check for updates\n"
     fi
+    
 }
 
 install_package () {
-    printf "Package not available in APT\n"
-    printf "Checking if package is available in MPR...\n"
-    mprPackageExistence=$(git ls-remote --exit-code https://mpr.makedeb.org/$1.git)
-    if [[ $mprPackageExistence > 0 ]]
+    printf "${bold}$1 not available in APT\n${normal}"
+    printf "${bold}Checking if $1 is available in MPR...${normal}\n"
+    mprPackageExistence=$(curl -o /dev/null -s -w "%{http_code}\n" https://mpr.makedeb.org/packages/$1)
+    if [[ $mprPackageExistence == 200 ]]
     then
-        printf "Package exists!\n"
-        printf "Downloading: $1\n"
-        git clone "https://mpr.makedeb.org/$1.git"
-        cd $1/
+        printf "${bold}$1 available in MPR!${normal}\n"
+        git clone "https://mpr.makedeb.org/$1.git" "/home/$USER/.cache/mpr/$1"
+        cd /home/$USER/.cache/mpr/$1
         makedeb -s -i
+        save_package_info "$1"
     else
-        printf "Package not available in MPR\n"
+        printf "${bold}$1 not available in APT and MPR!${normal}\n"
     fi
 }
 
-#check_internet () {
-#    if [[ $internetConnectivity != 0 ]]
-#    then
-#        printf "${red}Error:${nc} No internet connection available\n"
-#        exit 0
-#    fi
-#}
+mpr_packages_update () {
+    outdatedPackages=("$@")
+    for i in ${outdatedPackages[@]}
+    do
+        printf "${yellow}Updating $i...${nc}\n"
+        rm -rf /home/$USER/.cache/mpr/$i
+        git clone "https://mpr.makedeb.org/$i.git" "/home/$USER/.cache/mpr/$i"
+        cd /home/$USER/.cache/mpr/$i
+        makedeb -s -i
+        save_package_info "$i"
+    done
+}
+
+mpr_packages_update_check () {
+    printf "${bold}Checking for updates for packages from MPR...${normal}\n"
+    packages+=($(ls ~/.local/share/mpr/list/))
+    userHasOutdatedPackage=false
+    for i in ${packages[@]}
+    do
+        pkgLatestVersion=$(curl -s -X GET "https://mpr.makedeb.org/rpc?v=5&type=info&arg=$i" | jq | grep "Version" | cut -d ':' -f 2 | cut -c3- | rev | cut -c2- | rev)
+        pkgVersion=$(cat ~/.local/share/mpr/list/$i | grep "Version:" | cut -d ':' -f 2 | cut -c2-)
+        printf "${bold}$i${normal}\n"
+        printf "Installed version: $pkgVersion\n"
+        printf "Latest version: $pkgLatestVersion\n"
+        if [[ $pkgVersion == $pkgLatestVersion ]]
+        then
+            printf "${bold}$i${normal} is up to date!\n"
+        else
+            printf "${bold}$i${normal} is outdated!\n"
+            outdatedPackages+=($i)
+            userHasOutdatedPackage=true
+        fi
+    done
+    if [[ $userHasOutdatedPackage == false ]]
+    then
+        printf "${bold}All packages up to date!${normal}\n"
+    else
+        printf "${bold}${yellow}Outdated packages are:\n${outdatedPackages[*]}${nc}${normal}\n"
+        mpr_packages_update "${outdatedPackages[@]}"
+    fi
+}
+
+save_package_info () {
+    if [ ! -d ~/.local/share/mpr/list/ ]
+    then
+        if [ ! -d ~/.local/share/mpr/ ]
+        then    
+            mkdir ~/.local/share/mpr
+        fi
+        mkdir -p ~/.local/share/mpr/list
+    fi
+    pkgInfo=$(dpkg -s $1)
+    echo "$pkgInfo" > ~/.local/share/mpr/list/$1
+}
 
 help_page () {
     echo " _ __ ___  _ __  _ __ "
@@ -127,19 +189,23 @@ help_page () {
 }
 
 check_date () {
-    if [ ! -f ~/.config/mpr-install/date ]
+    if [ ! -f ~/.local/share/mpr/date ]
     then
-        mkdir -p ~/.config/mpr-install
-        touch ~/.config/mpr-install/date
+        if [ ! -d ~/.local/share/mpr/ ]
+        then    
+            mkdir ~/.local/share/mpr
+        fi
+        touch ~/.local/share/mpr/date
     fi
-    lastUpdateCheck=$(cat ~/.config/mpr-install/date)
+    lastUpdateCheck=$(cat ~/.local/share/mpr/date)
     today=$(date +%Y%m%d)
-    echo "$today" > ~/.config/mpr-install/date
+    echo "$today" > ~/.local/share/mpr/date
     if [[ $today != $lastUpdateCheck ]]
     then
         mpr_update_minimal
     fi
 }
+
 
 #######
 #START#
@@ -148,43 +214,73 @@ check_date () {
 
 check_dependencies
 check_date
+arguments=${@:2} # puts arguments to array
 
 case $1 in
-    install | -S | --sync ) #check_internet
-    aptPackageExistence=$(apt-cache -qq show $2)
-    if [ ! -z "$aptPackageExistence" ]
-    then
-        printf "Package available in APT!\n"
-        sudo apt install $2    
-    elif [ ! -z "$2" ]
-    then
-        install_package "$2"
-    else
-        printf "${red}Error:${nc} You have to enter package name\n"
-        printf "Example: mpr install ${bold}<packagename>${normal}\n"
-    fi
+    install | -S | --sync ) 
+    for i in ${arguments[@]}
+    do
+        printf "${bold}Trying to find $i...${normal}\n"
+        aptPackageExistence=$(apt-cache -qq show $i)
+        if [ ! -z "$aptPackageExistence" ]
+        then
+            printf "${bold}$i available in APT!${normal}\n"
+            sudo apt install $i   
+        elif [ ! -z "$i" ]
+        then
+            install_package "$i"
+        else
+            printf "${red}Error:${nc} You have to enter package name\n"
+            printf "Example: mpr install ${bold}<packagename>${normal}\n"
+        fi
+        printf "\n"
+    done
     ;;
-    update | -Sy ) #check_internet
+    update | -Sy )
     sudo apt update
     ;;
-    upgrade | -Su ) #check_internet
+    upgrade | -Su )
     sudo apt upgrade
+    mpr_packages_update_check
     ;;
-    -Suy | -Syu ) #check_internet
+    -Suy | -Syu )
     sudo apt update && sudo apt upgrade
+    mpr_packages_update_check
     ;;
-    remove | uninstall | -R | --remove) sudo apt remove $2
+    remove | uninstall | -R | --remove)
+    sudo apt remove $arguments
+    for i in ${arguments[@]}
+    do
+        pkgPath=$(which $i)
+        if [[ $pkgPath != /usr/bin/$i && -f ~/.local/share/mpr/list/$i ]]
+        then
+            rm ~/.local/share/mpr/list/$i
+        fi
+    done
     ;;
-    autoremove ) sudo apt autoremove
+    autoremove )
+    sudo apt autoremove
     ;;
-    list | -Q | --query) apt list
+    list | -Q | --query)
+    apt list
     ;;
-    info ) apt info $2
+    info )
+    apt info $arguments
     ;;
-    search ) apt search $2
+    search )
+    for i in ${arguments[@]}
+    do
+        printf "${bold}Searching for $i...${normal}\n"
+        printf "${yellow}APT search result${normal}\n"
+        apt search $i
+        printf "${yellow}MPR search result${normal}\n"
+        curl -s "https://mpr.makedeb.org/rpc?v=5&type=info&arg=$i" | jq
+    done
     ;;
-    version | selfupdate | -V | --version ) mpr_update
+    version | selfupdate | -V | --version )
+    mpr_update
     ;;
-    * ) help_page
+    * )
+    help_page
     ;;
 esac

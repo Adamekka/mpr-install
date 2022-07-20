@@ -1,11 +1,13 @@
 all: install
 
 install:
-		mkdir -p /usr/bin/mpr-install/
-		cp mpr.sh /usr/bin/mpr-install/mpr
-		chmod +x /usr/bin/mpr-install/mpr
-		ln -sf /usr/bin/mpr-install/mpr /usr/bin/mpr
-		cp version.txt /usr/bin/mpr-install/version
+		cp mpr.sh /usr/bin/mpr
+		chmod +x /usr/bin/mpr
 
 uninstall:
-		rm -rf /usr/bin/mpr-install
+		rm /usr/bin/mpr
+
+# my presets, ignore this
+# mkdir -p path
+# -p overwrites
+# ln -sf originalfile wherelink
