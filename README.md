@@ -11,7 +11,6 @@ https://trello.com/b/0PaxQ7HH/mpr-install
 * jq
 * make
 * makedeb
-* wget
 
 ## Install
 

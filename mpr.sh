@@ -6,7 +6,7 @@ red="\033[0;31m"
 yellow="\033[1;33m"
 nc="\033[0m" # No Color
 
-version=1.4
+version=1.5
 
 ###########
 #FUNCTIONS#
@@ -14,12 +14,12 @@ version=1.4
 
 
 check_dependencies () {
-    dependencies=(cat curl git jq make makedeb wget)
+    dependencies=(curl git jq make makedeb)
     isUserMissingDependencies=false
     for i in ${dependencies[@]}
     do
         dependencyPath=$(which $i)
-        if [[ $dependencyPath != /usr/bin/$i ]]
+        if [ -z "$dependencyPath" ]
         then
             printf "$i missing\n"
             missingDependencies+=($i)
@@ -39,9 +39,9 @@ check_versions () {
 }
 
 mpr_update () {
-    printf "Checking for update...\n"
-    wget -q --spider https://google.com
-    if [ $? -eq 0 ]
+    printf "Checking for MPR updates...\n"
+    internetConnectivity=$(ping -c 1 1.1.1.1)
+    if [ ! -z "$internetConnectivity" ]
     then
         check_versions
         printf "Your version is: $version\n"
@@ -70,9 +70,9 @@ mpr_update () {
 }
 
 mpr_update_minimal () {
-    printf "Checking for update...\n"
-    wget -q --spider https://google.com
-    if [ $? -eq 0 ]
+    printf "Checking for MPR updates...\n"
+    internetConnectivity=$(ping -c 1 1.1.1.1)
+    if [ ! -z "$internetConnectivity" ]
     then
         check_versions
         if [[ $version != $latestVersion ]]
@@ -92,7 +92,7 @@ install_package () {
     printf "${bold}$1 not available in APT\n${normal}"
     printf "${bold}Checking if $1 is available in MPR...${normal}\n"
     mprPackageExistence=$(curl -o /dev/null -s -w "%{http_code}\n" https://mpr.makedeb.org/packages/$1)
-    if [[ $mprPackageExistence == 200 ]]
+    if [[ $mprPackageExistence < 300 ]]
     then
         printf "${bold}$1 available in MPR!${normal}\n"
         git clone "https://mpr.makedeb.org/$1.git" "/home/$USER/.cache/mpr/$1"
@@ -100,7 +100,7 @@ install_package () {
         makedeb -s -i
         save_package_info "$1"
     else
-        printf "${bold}$1 not available in APT and MPR!${normal}\n"
+        printf "${bold}${red}Error:${nc} $1 not available in APT and MPR!${normal}\n"
     fi
 }
 
@@ -123,7 +123,7 @@ mpr_packages_update_check () {
     userHasOutdatedPackage=false
     for i in ${packages[@]}
     do
-        pkgLatestVersion=$(curl -s -X GET "https://mpr.makedeb.org/rpc?v=5&type=info&arg=$i" | jq | grep "Version" | cut -d ':' -f 2 | cut -c3- | rev | cut -c2- | rev)
+        pkgLatestVersion=$(curl -s -X GET "https://mpr.makedeb.org/rpc?v=5&type=info&arg=$i" | jq -r ".results[].Version")
         pkgVersion=$(cat ~/.local/share/mpr/list/$i | grep "Version:" | cut -d ':' -f 2 | cut -c2-)
         printf "${bold}$i${normal}\n"
         printf "Installed version: $pkgVersion\n"
@@ -149,10 +149,6 @@ mpr_packages_update_check () {
 save_package_info () {
     if [ ! -d ~/.local/share/mpr/list/ ]
     then
-        if [ ! -d ~/.local/share/mpr/ ]
-        then    
-            mkdir ~/.local/share/mpr
-        fi
         mkdir -p ~/.local/share/mpr/list
     fi
     pkgInfo=$(dpkg -s $1)
@@ -172,15 +168,16 @@ help_page () {
     echo "commands:"
     echo
     echo " install${normal} or ${bold}-S${normal} or ${bold}--sync${normal}                  Install a package"
-    echo " ${bold}update${normal} or ${bold}-Sy${normal}                            Update the APT and MPR cache"
+    echo " ${bold}update${normal} or ${bold}-Sy${normal}                            Update the APT cache"
     echo " ${bold}upgrade${normal} or ${bold}-Su${normal}                           Upgrade all installed packages"
     echo " ${bold}-Syu${normal} or ${bold}-Suy${normal}                             Update both caches and upgrade all installed packages"
     echo " ${bold}remove${normal} or ${bold}uninstall${normal} or ${bold}-R${normal} or ${bold}--remove${normal}    Remove a package"
     echo " ${bold}autoremove${normal}                               Remove auto-installed deps which are no longer required"
     echo " ${bold}list${normal} or ${bold}-Q${normal} or ${bold}--query${normal}                    List installed packages"
-    echo " ${bold}info${normal}                                     Show package information"
+    echo " ${bold}show${normal} or ${bold}info${normal}                             Show package information"
     echo " ${bold}search${normal}                                   Search for packages"
     # add clone - Clone a package from the MPR
+    echo " ${bold}createconfig${normal}                             Creates and updates config"
     echo " ${bold}version${normal} or ${bold}selfupdate${normal} or ${bold}-V${normal} or ${bold}--version${normal} Shows version and checks for update"
     echo " ${bold}*${normal}                                        Shows help page"
     echo
@@ -206,6 +203,38 @@ check_date () {
     fi
 }
 
+create_config () {
+    printf "Creating config...\n"
+    if [ ! -f ~/.config/mpr/config.json ]
+    then
+        if [ ! -d ~/.config/mpr/ ]
+        then
+            mkdir -p ~/.config/mpr
+        fi
+        touch ~/.config/mpr/config.json
+    fi
+    if [ ! -z $(which nala) ]
+    then
+        packageManager=nala
+        printf "Package manager set to ${bold}Nala${normal}\n"
+    else
+        packageManager=apt
+        printf "Package manager set to ${bold}APT${normal}\n"
+    fi
+    configJson=$(jq -n \
+    --arg packageManager "$packageManager" \
+    '$ARGS.named')
+    echo "$configJson" > ~/.config/mpr/config.json
+}
+
+read_config () {
+    if [ ! -f ~/.config/mpr/config.json ] 
+    then
+        printf "${red}${bold}Error:${nc} No config file${normal}\n"
+        create_config
+    fi
+    packageManager=$(cat ~/.config/mpr/config.json | jq -r ".packageManager")
+}
 
 #######
 #START#
@@ -215,6 +244,7 @@ check_date () {
 check_dependencies
 check_date
 arguments=${@:2} # puts arguments to array
+read_config
 
 case $1 in
     install | -S | --sync ) 
@@ -225,7 +255,7 @@ case $1 in
         if [ ! -z "$aptPackageExistence" ]
         then
             printf "${bold}$i available in APT!${normal}\n"
-            sudo apt install $i   
+            sudo $packageManager install $i   
         elif [ ! -z "$i" ]
         then
             install_package "$i"
@@ -237,18 +267,22 @@ case $1 in
     done
     ;;
     update | -Sy )
-    sudo apt update
+    sudo $packageManager update
     ;;
     upgrade | -Su )
-    sudo apt upgrade
+    sudo $packageManager upgrade
     mpr_packages_update_check
     ;;
     -Suy | -Syu )
-    sudo apt update && sudo apt upgrade
+    if [[ $packageManager == "apt" ]]
+    then
+        sudo apt update
+    fi
+    sudo $packageManager upgrade
     mpr_packages_update_check
     ;;
     remove | uninstall | -R | --remove)
-    sudo apt remove $arguments
+    sudo $packageManager remove $arguments
     for i in ${arguments[@]}
     do
         pkgPath=$(which $i)
@@ -259,26 +293,29 @@ case $1 in
     done
     ;;
     autoremove )
-    sudo apt autoremove
+    sudo $packageManager autoremove
     ;;
     list | -Q | --query)
-    apt list
+    $packageManager list
     ;;
-    info )
-    apt info $arguments
+    show | info )
+    $packageManager show $arguments
     ;;
     search )
     for i in ${arguments[@]}
     do
         printf "${bold}Searching for $i...${normal}\n"
         printf "${yellow}APT search result${normal}\n"
-        apt search $i
+        $packageManager search $i
         printf "${yellow}MPR search result${normal}\n"
         curl -s "https://mpr.makedeb.org/rpc?v=5&type=info&arg=$i" | jq
     done
     ;;
     version | selfupdate | -V | --version )
     mpr_update
+    ;;
+    createconfig )
+    create_config
     ;;
     * )
     help_page
