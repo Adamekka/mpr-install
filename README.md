@@ -35,6 +35,17 @@ cd .. && rm -rf mpr-install
 
 ![image](https://user-images.githubusercontent.com/68786400/179354119-6d7fbbb1-c8fc-4f4e-b7ac-bfeb4096b8a3.png)
 
+## Config
+
+##### Config is created automatically using 
+```
+mpr createconfig
+```
+
+You can find it in
+```
+~/.config/mpr/config.json
+```
 
 ## Known issues
 
