@@ -46,6 +46,9 @@ You can find it in
 ```
 ~/.config/mpr/config.json
 ```
+The only available options are ```apt``` and ```nala```.
+It is case sensitive.
+If you set it to another value, then the script won't work properly.
 
 ## Known issues
 
