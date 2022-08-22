@@ -11,6 +11,7 @@ https://trello.com/b/0PaxQ7HH/mpr-install
 * jq
 * make
 * makedeb
+* nala (optional) - https://gitlab.com/volian/nala
 
 ## Install
 
