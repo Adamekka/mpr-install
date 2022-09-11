@@ -51,6 +51,12 @@ The only available options are ```apt``` and ```nala```.
 It is case sensitive.
 If you set it to another value, then the script won't work properly.
 
+## Uninstall
+
+```
+sudo rm /usr/bin/mpr
+```
+
 ## Known issues
 
 1. You do not have permission for the directory $BUILDDIR:
