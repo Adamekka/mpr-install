@@ -17,29 +17,11 @@ A complete MPR helper
 
 ## Install
 
-1. Clone this repo:
-
 ```bash
-git clone https://github.com/Adamekka/mpr-install
-```
-
-<!-- markdownlint-disable MD029 -->
-2. Go to the **mpr-install** folder:
-
-```bash
-cd mpr-install/
-```
-
-3. Run **sudo make install** to install this script to your system:
-
-```bash
-sudo make install
-```
-
-4. (optional) Remove the **mpr-install** folder, that you cloned to your home folder:
-
-```bash
-cd .. && rm -rf mpr-install
+git clone https://github.com/Adamekka/mpr-install # Clone this repo
+cd mpr-install/ # Go to the mpr-install/ folder
+sudo make install # Run sudo make install to install this script to your system
+cd .. && rm -rf mpr-install # (optional) Remove the mpr-install folder, that you cloned to your home folder
 ```
 
 ## Usage
