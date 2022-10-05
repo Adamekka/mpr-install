@@ -87,7 +87,6 @@ mpr_update_minimal () {
     else
         printf "${yellow}Warning:${nc} You are offline, unable to check for updates\n"
     fi
-    
 }
 
 install_package () {
@@ -168,7 +167,7 @@ help_page () {
     echo "|  _   _ \|  _ \|  __|"
     echo "| | | | | | |_) | |   "
     echo "|_| |_| |_|  __/|_|   "
-    echo "          |_|         "  
+    echo "          |_|         "
     echo
     echo "${bold}"
     echo "Syntax: mpr <COMMAND> [PACKAGES]"
@@ -197,7 +196,7 @@ check_date () {
     if [ ! -f ~/.local/share/mpr/date ]
     then
         if [ ! -d ~/.local/share/mpr/ ]
-        then    
+        then
             mkdir ~/.local/share/mpr
         fi
         touch ~/.local/share/mpr/date
@@ -214,7 +213,7 @@ check_date () {
 create_config () {
     if [ -f ~/.config/mpr/config.json ]
     then
-        read -rp "Do you want to recreate config file? [y/n]: " yn    
+        read -rp "Do you want to recreate config file? [y/n]: " yn
     else
         yn=y
     fi
@@ -286,12 +285,12 @@ create_config () {
             --arg packageManager "$packageManager" \
             --arg updateFlatpakPackages "$updateflatpak" \
             '$ARGS.named')
-            echo "$configJson" > ~/.config/mpr/config.json            
+            echo "$configJson" > ~/.config/mpr/config.json
         ;;
         [nN] )
             printf "Denied\n"
         ;;
-        * ) 
+        * )
             printf "${red}Error:${nc} bad response\n"
             printf "Type [y] for confirm and [n] for deny\n"
         ;;
@@ -299,7 +298,7 @@ create_config () {
 }
 
 read_config () {
-    if [ ! -f ~/.config/mpr/config.json ] 
+    if [ ! -f ~/.config/mpr/config.json ]
     then
         printf "${red}${bold}Error:${nc} No config file${normal}\n"
         create_config
@@ -327,7 +326,7 @@ arguments=${@:2} # puts arguments to array
 read_config
 
 case $1 in
-    install | -S | --sync ) 
+    install | -S | --sync )
         for i in "${arguments[@]}"
         do
             printf "${bold}Trying to find $i...${normal}\n"
