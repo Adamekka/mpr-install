@@ -197,7 +197,7 @@ check_date () {
     then
         if [ ! -d ~/.local/share/mpr/ ]
         then
-            mkdir ~/.local/share/mpr
+            mkdir -p ~/.local/share/mpr
         fi
         touch ~/.local/share/mpr/date
     fi
