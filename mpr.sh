@@ -189,7 +189,7 @@ help_page () {
     echo " ${bold}*${normal}                                        Shows help page"
     echo
     echo "mpr checks for update automatically once a day"
-    printf "mpr supports both Debian and Arch syntax\n\n"
+    printf "mpr supports both APT and Pacman syntax\n\n"
 }
 
 check_date () {
