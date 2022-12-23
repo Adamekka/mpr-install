@@ -42,50 +42,38 @@ check_versions () {
 
 mpr_update () {
     printf "Checking for MPR updates...\n"
-    internetConnectivity=$(ping -c 1 1.1.1.1)
-    if [ -n "$internetConnectivity" ]
+    check_versions
+    printf "Your version is: $version\n"
+    printf "Latest version is: $latestVersion\n"
+    if [[ "$version" == "$latestVersion" ]]
     then
-        check_versions
-        printf "Your version is: $version\n"
-        printf "Latest version is: $latestVersion\n"
-        if [[ "$version" == "$latestVersion" ]]
-        then
-            printf "You have the latest version!\n"
-        else
-            printf "A newer version is available!\n"
-            read -rp "Do you want to update to version $latestVersion? [y/n]: " yn
-
-            case $yn in
-                [yY] ) printf "Updating...\n"
-                    git clone https://github.com/Adamekka/mpr-install
-                    cd mpr-install/ || printf "${red}Error:${nc} Something went wrong\n"
-                    sudo make install
-                    cd .. && rm -f -r mpr-install;;
-                [nN] ) printf "Update denied\n";;
-                * ) printf "${red}Error:${nc} bad response\n"
-                    printf "Type [y] for confirm and [n] for deny\n";;
-            esac
-        fi
+        printf "You have the latest version!\n"
     else
-        printf "${yellow}Warning:${nc} You are offline, unable to check for updates\n"
+        printf "A newer version is available!\n"
+        read -rp "Do you want to update to version $latestVersion? [y/n]: " yn
+
+        case $yn in
+            [yY] ) printf "Updating...\n"
+                git clone https://github.com/Adamekka/mpr-install
+                cd mpr-install/ || printf "${red}Error:${nc} Something went wrong\n"
+                sudo make install
+                cd .. && rm -f -r mpr-install;;
+            [nN] ) printf "Update denied\n";;
+            * ) printf "${red}Error:${nc} bad response\n"
+                printf "Type [y] for confirm and [n] for deny\n";;
+        esac
     fi
 }
 
 mpr_update_minimal () {
     printf "Checking for MPR updates...\n"
-    internetConnectivity=$(ping -c 1 1.1.1.1)
-    if [ -n "$internetConnectivity" ]
+    check_versions
+    if [[ "$version" != "$latestVersion" ]]
     then
-        check_versions
-        if [[ "$version" != "$latestVersion" ]]
-        then
-            printf "A newer version is available\n"
-            printf "Please run ${bold}mpr selfupdate${normal} to update\n"
-        else
-            printf "You are up to date!\n"
-        fi
+        printf "A newer version is available\n"
+        printf "Please run ${bold}mpr selfupdate${normal} to update\n"
     else
-        printf "${yellow}Warning:${nc} You are offline, unable to check for updates\n"
+        printf "You are up to date!\n"
     fi
 }
 
@@ -120,36 +108,30 @@ mpr_packages_update () {
 
 mpr_packages_update_check () {
     printf "${bold}Checking for updates for packages from MPR...${normal}\n"
-    internetConnectivity=$(ping -c 1 1.1.1.1)
-    if [ -n "$internetConnectivity" ]
-    then
-        packages+=($(ls ~/.local/share/mpr/list/))
-        userHasOutdatedPackage=false
-        for i in "${packages[@]}"
-        do
-            pkgLatestVersion=$(curl -s -X GET "https://mpr.makedeb.org/rpc?v=5&type=info&arg=$i" | jq -r ".results[].Version")
-            pkgVersion=$(cat ~/.local/share/mpr/list/$i | grep "Version:" | cut -d ':' -f 2 | cut -c2-)
-            printf "${bold}$i${normal}\n"
-            printf "Installed version: $pkgVersion\n"
-            printf "Latest version: $pkgLatestVersion\n"
-            if [[ "$pkgVersion" == "$pkgLatestVersion" ]]
-            then
-                printf "${bold}$i${normal} is up to date!\n"
-            else
-                printf "${bold}$i${normal} is outdated!\n"
-                outdatedPackages+=($i)
-                userHasOutdatedPackage=true
-            fi
-        done
-        if [[ $userHasOutdatedPackage == false ]]
+    packages+=($(ls ~/.local/share/mpr/list/))
+    userHasOutdatedPackage=false
+    for i in "${packages[@]}"
+    do
+        pkgLatestVersion=$(curl -s -X GET "https://mpr.makedeb.org/rpc?v=5&type=info&arg=$i" | jq -r ".results[].Version")
+        pkgVersion=$(cat ~/.local/share/mpr/list/$i | grep "Version:" | cut -d ':' -f 2 | cut -c2-)
+        printf "${bold}$i${normal}\n"
+        printf "Installed version: $pkgVersion\n"
+        printf "Latest version: $pkgLatestVersion\n"
+        if [[ "$pkgVersion" == "$pkgLatestVersion" ]]
         then
-            printf "${bold}All packages are up to date!${normal}\n"
+            printf "${bold}$i${normal} is up to date!\n"
         else
-            printf "${bold}${yellow}Outdated packages are:\n${outdatedPackages[*]}${nc}${normal}\n"
-            mpr_packages_update "${outdatedPackages[@]}"
+            printf "${bold}$i${normal} is outdated!\n"
+            outdatedPackages+=($i)
+            userHasOutdatedPackage=true
         fi
+    done
+    if [[ $userHasOutdatedPackage == false ]]
+    then
+        printf "${bold}All packages are up to date!${normal}\n"
     else
-        printf "${yellow}Warning:${nc} You are offline, unable to check for updates\n"
+        printf "${bold}${yellow}Outdated packages are:\n${outdatedPackages[*]}${nc}${normal}\n"
+        mpr_packages_update "${outdatedPackages[@]}"
     fi
 }
 
