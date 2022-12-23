@@ -14,62 +14,60 @@ otherPackageManagers=(flatpak)
 #FUNCTIONS#
 ###########
 
-
-check_dependencies () {
+check_dependencies() {
     dependencies=(curl git jq make makedeb)
     isUserMissingDependencies=false
-    for i in "${dependencies[@]}"
-    do
+    for i in "${dependencies[@]}"; do
         dependencyPath=$(which "$i")
-        if [ -z "$dependencyPath" ]
-        then
+        if [ -z "$dependencyPath" ]; then
             printf "%s, missing\n" "$i"
             missingDependencies+=("$i")
             isUserMissingDependencies=true
         fi
     done
-    if [[ $isUserMissingDependencies == true ]]
-    then
+    if [[ $isUserMissingDependencies == true ]]; then
         printf "${red}Error:${nc} Please install missing dependencies\n"
         printf "${bold}Missing dependencies are:\n${missingDependencies[*]}${normal}\n"
         exit 1
     fi
 }
 
-check_versions () {
+check_versions() {
     latestVersion=$(curl -s https://raw.githubusercontent.com/Adamekka/mpr-install/main/version.txt)
 }
 
-mpr_update () {
+mpr_update() {
     printf "Checking for MPR updates...\n"
     check_versions
     printf "Your version is: $version\n"
     printf "Latest version is: $latestVersion\n"
-    if [[ "$version" == "$latestVersion" ]]
-    then
+    if [[ "$version" == "$latestVersion" ]]; then
         printf "You have the latest version!\n"
     else
         printf "A newer version is available!\n"
         read -rp "Do you want to update to version $latestVersion? [y/n]: " yn
 
         case $yn in
-            [yY] ) printf "Updating...\n"
-                git clone https://github.com/Adamekka/mpr-install
-                cd mpr-install/ || printf "${red}Error:${nc} Something went wrong\n"
-                sudo make install
-                cd .. && rm -f -r mpr-install;;
-            [nN] ) printf "Update denied\n";;
-            * ) printf "${red}Error:${nc} bad response\n"
-                printf "Type [y] for confirm and [n] for deny\n";;
+        [yY])
+            printf "Updating...\n"
+            git clone https://github.com/Adamekka/mpr-install
+            cd mpr-install/ || printf "${red}Error:${nc} Something went wrong\n"
+            sudo make install
+            cd .. && rm -f -r mpr-install
+            ;;
+        [nN]) printf "Update denied\n" ;;
+        *)
+            printf "${red}Error:${nc} bad response\n"
+            printf "Type [y] for confirm and [n] for deny\n"
+            ;;
         esac
     fi
 }
 
-mpr_update_minimal () {
+mpr_update_minimal() {
     printf "Checking for MPR updates...\n"
     check_versions
-    if [[ "$version" != "$latestVersion" ]]
-    then
+    if [[ "$version" != "$latestVersion" ]]; then
         printf "A newer version is available\n"
         printf "Please run ${bold}mpr selfupdate${normal} to update\n"
     else
@@ -77,12 +75,11 @@ mpr_update_minimal () {
     fi
 }
 
-install_package () {
+install_package() {
     printf "${bold}$1 not available in APT\n${normal}"
     printf "${bold}Checking if $1 is available in MPR...${normal}\n"
     mprPackageExistence=$(curl -o /dev/null -s -w "%{http_code}\n" https://mpr.makedeb.org/packages/"$1")
-    if [[ $mprPackageExistence -lt 300 ]]
-    then
+    if [[ $mprPackageExistence -lt 300 ]]; then
         printf "${bold}$1 available in MPR!${normal}\n"
         git clone "https://mpr.makedeb.org/$1.git" "$HOME/.cache/mpr/$1"
         cd "$HOME"/.cache/mpr/"$1" || printf "${red}Error:${nc} Something went wrong\n"
@@ -93,10 +90,9 @@ install_package () {
     fi
 }
 
-mpr_packages_update () {
+mpr_packages_update() {
     outdatedPackages=("$@")
-    for i in "${outdatedPackages[@]}"
-    do
+    for i in "${outdatedPackages[@]}"; do
         printf "${yellow}Updating $i...${nc}\n"
         rm -rf "$HOME"/.cache/mpr/"$i"
         git clone "https://mpr.makedeb.org/$i.git" "$HOME/.cache/mpr/$i"
@@ -106,19 +102,17 @@ mpr_packages_update () {
     done
 }
 
-mpr_packages_update_check () {
+mpr_packages_update_check() {
     printf "${bold}Checking for updates for packages from MPR...${normal}\n"
     packages+=($(ls ~/.local/share/mpr/list/))
     userHasOutdatedPackage=false
-    for i in "${packages[@]}"
-    do
+    for i in "${packages[@]}"; do
         pkgLatestVersion=$(curl -s -X GET "https://mpr.makedeb.org/rpc?v=5&type=info&arg=$i" | jq -r ".results[].Version")
         pkgVersion=$(cat ~/.local/share/mpr/list/$i | grep "Version:" | cut -d ':' -f 2 | cut -c2-)
         printf "${bold}$i${normal}\n"
         printf "Installed version: $pkgVersion\n"
         printf "Latest version: $pkgLatestVersion\n"
-        if [[ "$pkgVersion" == "$pkgLatestVersion" ]]
-        then
+        if [[ "$pkgVersion" == "$pkgLatestVersion" ]]; then
             printf "${bold}$i${normal} is up to date!\n"
         else
             printf "${bold}$i${normal} is outdated!\n"
@@ -126,8 +120,7 @@ mpr_packages_update_check () {
             userHasOutdatedPackage=true
         fi
     done
-    if [[ $userHasOutdatedPackage == false ]]
-    then
+    if [[ $userHasOutdatedPackage == false ]]; then
         printf "${bold}All packages are up to date!${normal}\n"
     else
         printf "${bold}${yellow}Outdated packages are:\n${outdatedPackages[*]}${nc}${normal}\n"
@@ -135,16 +128,15 @@ mpr_packages_update_check () {
     fi
 }
 
-save_package_info () {
-    if [ ! -d ~/.local/share/mpr/list/ ]
-    then
+save_package_info() {
+    if [ ! -d ~/.local/share/mpr/list/ ]; then
         mkdir -p ~/.local/share/mpr/list
     fi
     pkgInfo=$(dpkg -s "$1")
-    echo "$pkgInfo" > ~/.local/share/mpr/list/"$1"
+    echo "$pkgInfo" >~/.local/share/mpr/list/"$1"
 }
 
-help_page () {
+help_page() {
     echo " _ __ ___  _ __  _ __ "
     echo "|  _   _ \|  _ \|  __|"
     echo "| | | | | | |_) | |   "
@@ -174,122 +166,108 @@ help_page () {
     printf "mpr supports both APT and Pacman syntax\n\n"
 }
 
-check_date () {
-    if [ ! -f ~/.local/share/mpr/date ]
-    then
-        if [ ! -d ~/.local/share/mpr/ ]
-        then
+check_date() {
+    if [ ! -f ~/.local/share/mpr/date ]; then
+        if [ ! -d ~/.local/share/mpr/ ]; then
             mkdir -p ~/.local/share/mpr
         fi
         touch ~/.local/share/mpr/date
     fi
     lastUpdateCheck=$(cat ~/.local/share/mpr/date)
     today=$(date +%Y%m%d)
-    echo "$today" > ~/.local/share/mpr/date
-    if [[ "$today" != "$lastUpdateCheck" ]]
-    then
+    echo "$today" >~/.local/share/mpr/date
+    if [[ "$today" != "$lastUpdateCheck" ]]; then
         mpr_update_minimal
     fi
 }
 
-create_config () {
-    if [ -f ~/.config/mpr/config.json ]
-    then
+create_config() {
+    if [ -f ~/.config/mpr/config.json ]; then
         read -rp "Do you want to recreate config file? [y/n]: " yn
     else
         yn=y
     fi
     case $yn in
-        [yY] )
-            printf "Creating config...\n"
-            if [ ! -f ~/.config/mpr/config.json ]
-            then
-                if [ ! -d ~/.config/mpr/ ]
-                then
-                    mkdir -p ~/.config/mpr
-                fi
-                touch ~/.config/mpr/config.json
+    [yY])
+        printf "Creating config...\n"
+        if [ ! -f ~/.config/mpr/config.json ]; then
+            if [ ! -d ~/.config/mpr/ ]; then
+                mkdir -p ~/.config/mpr
             fi
-            if [ -n "$(which nala)" ]
-            then
-                printf "What package manager should mpr use?\n"
-                select opt in "Nala (recommended)" "APT"
-                do
+            touch ~/.config/mpr/config.json
+        fi
+        if [ -n "$(which nala)" ]; then
+            printf "What package manager should mpr use?\n"
+            select opt in "Nala (recommended)" "APT"; do
+                case $opt in
+                "Nala (recommended)")
+                    packageManager=nala
+                    printf "Package manager set to ${bold}Nala${normal}\n"
+                    break
+                    ;;
+                "APT")
+                    packageManager=apt
+                    printf "Package manager set to ${bold}APT${normal}\n"
+                    break
+                    ;;
+                *)
+                    printf "${red}Error:${nc} bad response\n"
+                    packageManager=nala
+                    printf "Package manager set to ${bold}Nala${normal}\n"
+                    break
+                    ;;
+                esac
+            done
+        else
+            packageManager=apt
+            printf "Package manager set to ${bold}APT${normal}\n"
+        fi
+        for i in "${otherPackageManagers[@]}"; do
+            if [ -n "$(which "$i")" ]; then
+                printf "Should mpr also update ${bold}$i${normal} packages?\n"
+                select opt in "Yes" "No"; do
                     case $opt in
-                        "Nala (recommended)" )
-                            packageManager=nala
-                            printf "Package manager set to ${bold}Nala${normal}\n"
-                            break
+                    "Yes")
+                        eval "update$i=true"
+                        printf "$i packages ${bold}will${normal} be updated\n"
+                        break
                         ;;
-                        "APT" )
-                            packageManager=apt
-                            printf "Package manager set to ${bold}APT${normal}\n"
-                            break
-                        ;;
-                        * )
-                            printf "${red}Error:${nc} bad response\n"
-                            packageManager=nala
-                            printf "Package manager set to ${bold}Nala${normal}\n"
-                            break
+                    "No")
+                        eval "update$i=false"
+                        printf "$i packages ${bold}won't${normal} be updated\n"
+                        break
                         ;;
                     esac
                 done
             else
-                packageManager=apt
-                printf "Package manager set to ${bold}APT${normal}\n"
+                eval "use$i=false"
+                printf "$i isn't installed on system, so it's packages ${bold}won't${normal} be updated\n"
             fi
-            for i in "${otherPackageManagers[@]}"
-            do
-                if [ -n "$(which "$i")" ]
-                then
-                    printf "Should mpr also update ${bold}$i${normal} packages?\n"
-                    select opt in "Yes" "No"
-                    do
-                        case $opt in
-                            "Yes" )
-                                eval "update$i=true"
-                                printf "$i packages ${bold}will${normal} be updated\n"
-                                break
-                            ;;
-                            "No" )
-                                eval "update$i=false"
-                                printf "$i packages ${bold}won't${normal} be updated\n"
-                                break
-                            ;;
-                        esac
-                    done
-                else
-                    eval "use$i=false"
-                    printf "$i isn't installed on system, so it's packages ${bold}won't${normal} be updated\n"
-                fi
-            done
-            configJson=$(jq -n \
+        done
+        configJson=$(jq -n \
             --arg packageManager "$packageManager" \
             --arg updateFlatpakPackages "$updateflatpak" \
             '$ARGS.named')
-            echo "$configJson" > ~/.config/mpr/config.json
+        echo "$configJson" >~/.config/mpr/config.json
         ;;
-        [nN] )
-            printf "Denied\n"
+    [nN])
+        printf "Denied\n"
         ;;
-        * )
-            printf "${red}Error:${nc} bad response\n"
-            printf "Type [y] for confirm and [n] for deny\n"
+    *)
+        printf "${red}Error:${nc} bad response\n"
+        printf "Type [y] for confirm and [n] for deny\n"
         ;;
     esac
 }
 
-read_config () {
-    if [ ! -f ~/.config/mpr/config.json ]
-    then
+read_config() {
+    if [ ! -f ~/.config/mpr/config.json ]; then
         printf "${red}${bold}Error:${nc} No config file${normal}\n"
         create_config
     fi
     packageManager=$(cat ~/.config/mpr/config.json | jq -r ".packageManager")
-    for i in "${otherPackageManagers[@]}"
-    do
-        if [[ $(cat ~/.config/mpr/config.json | jq -r ".use$i") == "true" ]]
-        then
+    for i in "${otherPackageManagers[@]}"; do
+        if [[ $(cat ~/.config/mpr/config.json | jq -r ".use$i") == "true" ]]; then
             eval "use$i=true"
         else
             eval "use$i=false"
@@ -301,83 +279,75 @@ read_config () {
 #START#
 #######
 
-
 check_dependencies
 check_date
 arguments=${@:2} # puts arguments to array
 read_config
 
 case $1 in
-    install | -S | --sync )
-        for i in "${arguments[@]}"
-        do
-            printf "${bold}Trying to find $i...${normal}\n"
-            aptPackageExistence=$(apt-cache -qq show "$i")
-            if [ -n "$aptPackageExistence" ]
-            then
-                printf "${bold}$i available in APT!${normal}\n"
-                sudo "$packageManager" install "$i"
-            elif [ -n "$i" ]
-            then
-                install_package "$i"
-            fi
-            printf "\n"
-        done
-    ;;
-    update | -Sy )
-        sudo "$packageManager" update
-    ;;
-    upgrade | -Su )
-        sudo "$packageManager" upgrade
-        mpr_packages_update_check
-        sudo flatpak update
-    ;;
-    -Suy | -Syu )
-        if [[ $packageManager == "apt" ]]
-        then
-            sudo apt update
+install | -S | --sync)
+    for i in "${arguments[@]}"; do
+        printf "${bold}Trying to find $i...${normal}\n"
+        aptPackageExistence=$(apt-cache -qq show "$i")
+        if [ -n "$aptPackageExistence" ]; then
+            printf "${bold}$i available in APT!${normal}\n"
+            sudo "$packageManager" install "$i"
+        elif [ -n "$i" ]; then
+            install_package "$i"
         fi
-        sudo "$packageManager" upgrade
-        mpr_packages_update_check
-        sudo flatpak update
+        printf "\n"
+    done
     ;;
-    remove | uninstall | -R | --remove)
-        sudo apt remove "$arguments"
-        for i in "${arguments[@]}"
-        do
-            pkgPath=$(which "$i")
-            if [[ $pkgPath != /usr/bin/$i && -f ~/.local/share/mpr/list/$i ]]
-            then
-                rm ~/.local/share/mpr/list/"$i"
-            fi
-        done
+update | -Sy)
+    sudo "$packageManager" update
     ;;
-    autoremove )
-        sudo "$packageManager" autoremove
+upgrade | -Su)
+    sudo "$packageManager" upgrade
+    mpr_packages_update_check
+    sudo flatpak update
     ;;
-    list | -Q | --query)
-        $packageManager list
+-Suy | -Syu)
+    if [[ $packageManager == "apt" ]]; then
+        sudo apt update
+    fi
+    sudo "$packageManager" upgrade
+    mpr_packages_update_check
+    sudo flatpak update
     ;;
-    show | info )
-        $packageManager show "$arguments"
+remove | uninstall | -R | --remove)
+    sudo apt remove "$arguments"
+    for i in "${arguments[@]}"; do
+        pkgPath=$(which "$i")
+        if [[ $pkgPath != /usr/bin/$i && -f ~/.local/share/mpr/list/$i ]]; then
+            rm ~/.local/share/mpr/list/"$i"
+        fi
+    done
     ;;
-    search )
-        for i in "${arguments[@]}"
-        do
-            printf "${bold}Searching for $i...${normal}\n"
-            printf "${yellow}APT search result${normal}\n"
-            $packageManager search "$i"
-            printf "${yellow}MPR search result${normal}\n"
-            curl -s "https://mpr.makedeb.org/rpc?v=5&type=info&arg=$i" | jq
-        done
+autoremove)
+    sudo "$packageManager" autoremove
     ;;
-    version | selfupdate | -V | --version )
-        mpr_update
+list | -Q | --query)
+    $packageManager list
     ;;
-    createconfig )
-        create_config
+show | info)
+    $packageManager show "$arguments"
     ;;
-    * )
-        help_page
+search)
+    for i in "${arguments[@]}"; do
+        printf "${bold}Searching for $i...${normal}\n"
+        printf "${yellow}APT search result${normal}\n"
+        $packageManager search "$i"
+        printf "${yellow}MPR search result${normal}\n"
+        curl -s "https://mpr.makedeb.org/rpc?v=5&type=info&arg=$i" | jq
+    done
+    ;;
+version | selfupdate | -V | --version)
+    mpr_update
+    ;;
+createconfig)
+    create_config
+    ;;
+*)
+    help_page
     ;;
 esac
